@@ -16,6 +16,8 @@ the greatest website to ever fit in a single TCP packet
 
 eV (admin@packet.city), yan (webmaster@packet.city)
 
+Get in touch today to hear about our 150-byte ad sponsorship opportunities!
+
 # credits
 
 * visuals based on http://www.p01.org/128b_raytraced_checkboard/ by Mathieu 'p01' Henri
