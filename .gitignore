@@ -1,0 +1,11 @@
+# Generic ignores
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Project specific ignores
+server/index.html
+server/cpkthttp
