@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
@@ -15,7 +16,7 @@
 #include <unistd.h>
 
 
-#define PORT "3490"  // the port users will be connecting to
+#define PORT "80"  // the port users will be connecting to
 
 #define BACKLOG 10     // how many pending connections queue will hold
 
