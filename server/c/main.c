@@ -119,7 +119,7 @@ int main(void)
     fclose(fp);
      
     send_buffer = (char*)calloc(numbytes, sizeof(char));	
-    hdrbytes = sprintf(send_buffer, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\ncontent-encoding: deflate\r\n\r\n", numbytes);
+    hdrbytes = sprintf(send_buffer, "HTTP/1.1 200 k\nContent-Length: %d\ncontent-encoding: deflate\n\n", numbytes);
     memcpy(send_buffer+hdrbytes, buffer, numbytes);
 
     printf("server: waiting for connections on port %s...\n", PORT);
