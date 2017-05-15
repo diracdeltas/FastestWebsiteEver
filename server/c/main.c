@@ -15,6 +15,10 @@
 #include <signal.h>
 #include <unistd.h>
 
+#ifdef DEFLATE
+#include <zlib.h>
+#define HTTP_HEADER_SIZE 64 // for payloads up to 9999
+#endif
 
 #define PORT "80"  // the port users will be connecting to
 
@@ -67,12 +71,12 @@ int main(void)
             perror("setsockopt reuseaddr");
             exit(1);
         }
-
+#ifdef SO_BUSY_POLL
         if (setsockopt(sockfd, SOL_SOCKET, SO_BUSY_POLL, &yes, sizeof(int)) == -1) {
             perror("setsockopt busypoll");
             exit(1);
         }
-
+#endif
         if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(int)) == -1) {
             perror("setsockopt tcp nodelay");
             exit(1);
@@ -117,11 +121,51 @@ int main(void)
      
     fread(buffer, sizeof(char), numbytes, fp);
     fclose(fp);
-     
-    send_buffer = (char*)calloc(numbytes, sizeof(char));	
-    hdrbytes = sprintf(send_buffer, "HTTP/1.1 200 k\nContent-Length: %d\ncontent-encoding: deflate\n\n", numbytes);
-    memcpy(send_buffer+hdrbytes, buffer, numbytes);
 
+#ifdef DEFLATE
+    z_stream defstream;
+    char     *obuf;
+
+    // Compress file
+    //-----------------------------
+    if ((obuf = malloc (numbytes * sizeof (char))) == NULL) return 1;
+      
+    defstream.zalloc = Z_NULL; 
+    defstream.zfree = Z_NULL;
+
+    // Input
+    defstream.avail_in = numbytes; 
+    defstream.next_in = (Bytef *) buffer;
+
+    // Output
+    defstream.avail_out = numbytes;
+    defstream.next_out = (Bytef *)obuf; 
+    
+    // Match default Python script configuration
+    deflateInit2 (&defstream, Z_BEST_COMPRESSION, Z_DEFLATED, 
+		  -15, 8, Z_DEFAULT_STRATEGY);
+    deflate (&defstream, Z_FINISH);
+    deflateEnd (&defstream);
+
+    numbytes = defstream.total_out;
+    free (buffer);
+    //-----------------------------
+#endif
+
+#ifdef DEFLATE     
+    send_buffer = (char*)calloc(numbytes + HTTP_HEADER_SIZE, sizeof(char));	
+#else
+    send_buffer = (char*)calloc(numbytes, sizeof(char));	
+#endif
+    hdrbytes = sprintf(send_buffer, "HTTP/1.1 200 k\nContent-Length: %ld\ncontent-encoding: deflate\n\n", numbytes);
+#ifdef DEFLATE
+    memcpy(send_buffer+hdrbytes, obuf, numbytes);
+    free (obuf);
+#else
+    memcpy(send_buffer+hdrbytes, buffer, numbytes);
+#endif
+
+    printf ("INFO: TCP payload size: %ld\n", numbytes + hdrbytes);
     printf("server: waiting for connections on port %s...\n", PORT);
 
     while(1) {
