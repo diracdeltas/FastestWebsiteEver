@@ -16,7 +16,13 @@
 #include <unistd.h>
 
 #ifdef DEFLATE
+#include <sys/stat.h>
+#include <sys/uio.h>
+#include <fcntl.h>
+
+
 #include <zlib.h>
+#define DIE(x) {perror(x);exit(EXIT_FAILURE);}
 #endif
 
 #define PORT "80"  // the port users will be connecting to
@@ -104,6 +110,55 @@ int main(void)
         exit(1);
     }
 
+#ifdef DEFLATE
+    z_stream    defstream;
+    char        *obuf;
+    struct stat st;
+    int         fd;
+    struct iovec iov[2];
+
+    if ((stat ("index.html", &st)) < 0) DIE ("stat:");
+    if ((fd = open ("index.html", O_RDONLY)) < 0) DIE ("open:");
+
+    numbytes = st.st_size;
+    
+    // Compress file
+    //-----------------------------
+    if ((buffer = malloc (numbytes * sizeof (char))) == NULL) return 1;
+    if ((obuf = malloc (numbytes * sizeof (char))) == NULL) return 1;
+    if ((read (fd, obuf, numbytes)) < 0) DIE("read:");
+    close (fd);
+ 
+    defstream.zalloc = Z_NULL; 
+    defstream.zfree = Z_NULL;
+
+    // Input
+    defstream.avail_in = numbytes; 
+    defstream.next_in = (Bytef *) obuf; 
+
+    // Output
+    defstream.avail_out = numbytes;
+    defstream.next_out = (Bytef *)buffer; 
+    
+    // Match default Python script configuration
+    deflateInit2 (&defstream, Z_BEST_COMPRESSION, Z_DEFLATED, 
+		  -15, 8, Z_DEFAULT_STRATEGY);
+    deflate (&defstream, Z_FINISH);
+    deflateEnd (&defstream);
+
+    numbytes = defstream.total_out;
+    // Reuse obuf for header
+    if ((obuf = realloc (obuf, MAX_HEADERS_LENGTH)) == NULL) DIE("realloc:");
+    hdrbytes = sprintf(obuf, HEADERS, numbytes);
+
+    // Prepara io
+    iov[0].iov_base = obuf;
+    iov[0].iov_len = hdrbytes;
+    iov[1].iov_base = buffer;
+    iov[1].iov_len = numbytes;
+    
+#else
+
     fp = fopen("index.html","r");
  
     if(fp == NULL) {
@@ -128,36 +183,8 @@ int main(void)
     hdrbytes = sprintf(buffer, HEADERS, numbytes);
     fread(buffer + hdrbytes, sizeof(char), numbytes, fp);
     fclose(fp);
-
-#ifdef DEFLATE
-    z_stream defstream;
-    char     *obuf;
-
-    // Compress file
-    //-----------------------------
-    if ((obuf = malloc (numbytes * sizeof (char))) == NULL) return 1;
-      
-    defstream.zalloc = Z_NULL; 
-    defstream.zfree = Z_NULL;
-
-    // Input
-    defstream.avail_in = numbytes; 
-    defstream.next_in = (Bytef *) buffer + hdrbytes;
-
-    // Output
-    defstream.avail_out = numbytes;
-    defstream.next_out = (Bytef *)obuf; 
-    
-    // Match default Python script configuration
-    deflateInit2 (&defstream, Z_BEST_COMPRESSION, Z_DEFLATED, 
-		  -15, 8, Z_DEFAULT_STRATEGY);
-    deflate (&defstream, Z_FINISH);
-    deflateEnd (&defstream);
-
-    numbytes = defstream.total_out;
-    memcpy (buffer + hdrbytes, obuf, numbytes);
-    free (obuf);
 #endif
+
 
     printf ("INFO: TCP payload size: %ld\n", numbytes + hdrbytes);
     printf("server: waiting for connections on port %s...\n", PORT);
@@ -169,10 +196,16 @@ int main(void)
             perror("accept");
             continue;
         }
-
+#ifdef DEFLATE
+	if (writev (new_fd, iov, 2) < 0) 
+	  {
+              perror ("writev:");
+          }
+#else
         if (send(new_fd, buffer, numbytes + hdrbytes, 0) == -1) {
             perror("send");
         }
+#endif
         close(new_fd);
     }
 
