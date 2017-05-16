@@ -1,0 +1,5 @@
+sudo: false
+language: c
+script:
+  - make server/index.html
+  - test $(stat -c'%s' server/index.html) -lt 1300

@@ -1,3 +1,6 @@
+[![Build
+Status](https://travis-ci.org/diracdeltas/FastestWebsiteEver.svg?branch=master)](https://travis-ci.org/diracdeltas/FastestWebsiteEver)
+
 # what is this?
 
 the greatest website to ever fit in a single TCP packet
