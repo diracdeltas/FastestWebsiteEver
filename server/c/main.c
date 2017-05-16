@@ -17,12 +17,14 @@
 
 #ifdef DEFLATE
 #include <zlib.h>
-#define HTTP_HEADER_SIZE 64 // for payloads up to 9999
 #endif
 
 #define PORT "80"  // the port users will be connecting to
+#define HEADERS "HTTP/1.1 200 k\nContent-Length: %ld\ncontent-encoding: deflate\n\n"
 
 #define BACKLOG 10     // how many pending connections queue will hold
+#define MAX_CONTENT_LENGTH 9999
+#define MAX_HEADERS_LENGTH (strlen(HEADERS) + 2)
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -46,7 +48,6 @@ int main(void)
     int rv;
     FILE *fp;
     char    *buffer;
-    char    *send_buffer;
     long    numbytes;
     long    hdrbytes;
 
@@ -71,12 +72,12 @@ int main(void)
             perror("setsockopt reuseaddr");
             exit(1);
         }
-#ifdef SO_BUSY_POLL
+
         if (setsockopt(sockfd, SOL_SOCKET, SO_BUSY_POLL, &yes, sizeof(int)) == -1) {
             perror("setsockopt busypoll");
             exit(1);
-        }
-#endif
+        } 
+
         if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(int)) == -1) {
             perror("setsockopt tcp nodelay");
             exit(1);
@@ -113,13 +114,19 @@ int main(void)
     fseek(fp, 0L, SEEK_END);
     numbytes = ftell(fp);
     fseek(fp, 0L, SEEK_SET);	
-     
-    buffer = (char*)calloc(numbytes, sizeof(char));	
+
+    if(numbytes > MAX_CONTENT_LENGTH) {
+      fprintf(stderr, "server: content is longer than maximum size %d\n", MAX_CONTENT_LENGTH);
+    }
+
+    hdrbytes = MAX_HEADERS_LENGTH;
+    buffer = (char*)calloc(hdrbytes + numbytes, sizeof(char));	
     if(buffer == NULL) {
         return 1;
     }
      
-    fread(buffer, sizeof(char), numbytes, fp);
+    hdrbytes = sprintf(buffer, HEADERS, numbytes);
+    fread(buffer + hdrbytes, sizeof(char), numbytes, fp);
     fclose(fp);
 
 #ifdef DEFLATE
@@ -135,7 +142,7 @@ int main(void)
 
     // Input
     defstream.avail_in = numbytes; 
-    defstream.next_in = (Bytef *) buffer;
+    defstream.next_in = (Bytef *) buffer + hdrbytes;
 
     // Output
     defstream.avail_out = numbytes;
@@ -148,21 +155,8 @@ int main(void)
     deflateEnd (&defstream);
 
     numbytes = defstream.total_out;
-    free (buffer);
-    //-----------------------------
-#endif
-
-#ifdef DEFLATE     
-    send_buffer = (char*)calloc(numbytes + HTTP_HEADER_SIZE, sizeof(char));	
-#else
-    send_buffer = (char*)calloc(numbytes, sizeof(char));	
-#endif
-    hdrbytes = sprintf(send_buffer, "HTTP/1.1 200 k\nContent-Length: %ld\ncontent-encoding: deflate\n\n", numbytes);
-#ifdef DEFLATE
-    memcpy(send_buffer+hdrbytes, obuf, numbytes);
+    memcpy (buffer + hdrbytes, obuf, numbytes);
     free (obuf);
-#else
-    memcpy(send_buffer+hdrbytes, buffer, numbytes);
 #endif
 
     printf ("INFO: TCP payload size: %ld\n", numbytes + hdrbytes);
@@ -176,7 +170,7 @@ int main(void)
             continue;
         }
 
-        if (send(new_fd, send_buffer, numbytes+hdrbytes, 0) == -1) {
+        if (send(new_fd, buffer, numbytes + hdrbytes, 0) == -1) {
             perror("send");
         }
         close(new_fd);
