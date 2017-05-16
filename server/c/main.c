@@ -147,6 +147,9 @@ int main(void)
     deflateEnd (&defstream);
 
     numbytes = defstream.total_out;
+    if(numbytes > MAX_CONTENT_LENGTH) {
+      fprintf(stderr, "server: content is longer than maximum size %d\n", MAX_CONTENT_LENGTH);
+    }
     // Reuse obuf for header
     if ((obuf = realloc (obuf, MAX_HEADERS_LENGTH)) == NULL) DIE("realloc:");
     hdrbytes = sprintf(obuf, HEADERS, numbytes);
