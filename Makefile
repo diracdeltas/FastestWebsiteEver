@@ -1,7 +1,7 @@
 all: server/index.html server/cpkthttp
 
 server/index.html: client/index.html
-	./utils/deflate.py client/index.html server/index.html
+	zopfli client/index.html --i1000 -c --deflate > server/index.html
 
 server/cpkthttp: server/c/main.c
 	gcc -O2 -o server/cpkthttp server/c/main.c
