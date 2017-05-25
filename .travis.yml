@@ -1,5 +1,9 @@
 sudo: false
 language: c
+addons:
+  apt:
+    packages:
+      - zopfli
 script:
   - make server/index.html
   - test $(stat -c'%s' server/index.html) -lt 1300
