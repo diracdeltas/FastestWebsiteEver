@@ -15,6 +15,7 @@ the greatest website to ever fit in a single TCP packet
 * favicon: reduced gif to 1/2 original frame count, applied lossy LZW compression.
 * HTML mangling: closing tags are for losers.
 * bespoke webserver written in C
+* remove GIF comment extension block, saving 36 bytes (thanks Samy Kamkar)
 
 # who made this?
 
