@@ -11,7 +11,10 @@
 	b.connect(c.destination),
 	b.onaudioprocess=function(e){
 		d=e.outputBuffer.getChannelData(0);
-		for(i=0;i<d.length;i++,t=++T*32000/c.sampleRate)
+		for(i=0;
+			i<d.length;
+			i++,t=++T*32000/c.sampleRate/*simple resampler*/)
+			/* music by mu6k */
 			d[i]=(((3e3/(y=t&16383)&1)*35+
 				(x=t*'6689'[t>>16&3]/24&127)*y/4e4+
 				((t>>8^t>>10|t>>14|x)&63))&255)/128-1
