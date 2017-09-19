@@ -1,5 +1,9 @@
 sudo: false
+dist: trusty
 language: c
+install:
+  - git clone https://github.com/google/zopfli.git
+  - pushd zopfli; make && export PATH=$PATH:$PWD; popd
 script:
   - make server/index.html
-  - test $(stat -c'%s' server/index.html) -lt 1300
+  - s=$(stat -c%s server/index.html); echo $s; test $s -lt 1300
