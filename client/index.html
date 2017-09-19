@@ -4,11 +4,10 @@
 <a href='//candyjapan.com'>Sponsored by Candy Japan - Surprise Japanese candy boxes twice a month</a>
 <img id=z>YOUR_120_BYTE_AD_HERE<img id=y>
 <script>
-	n=setInterval("for(n+=7,i=k,P='\u25b2.\\n';i-=1/k;P+=P[i%2?(i%2*j-j+n/k^j)&1:2])j=k/i;p.innerHTML=P",k=64);
 	z.src=y.src=l.href,
-	T=t=0,
+	T=t=0,k=64,
 	c=new AudioContext(),
-	b=c.createScriptProcessor(0,1,1),
+	b=c.createScriptProcessor(2048,1,1),
 	b.connect(c.destination),
 	b.onaudioprocess=function(e){
 		d=e.outputBuffer.getChannelData(0);
@@ -16,5 +15,10 @@
 			d[i]=(((3e3/(y=t&16383)&1)*35+
 				(x=t*'6689'[t>>16&3]/24&127)*y/4e4+
 				((t>>8^t>>10|t>>14|x)&63))&255)/128-1
+		for(n=t>>7,i=k,P='\u25b2.\n';
+			i-=1/k;
+			P+=P[i%2?(i%2*j-j+n/k^j)&1:2])
+				j=k/i;
+		p.innerText=P
 	}
 </script>
