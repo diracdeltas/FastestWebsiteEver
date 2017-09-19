@@ -1,7 +1,8 @@
 all: server/index.html server/cpkthttp
 
 server/index.html: client/index.html
-	zopfli --i1000 -c --deflate  client/index.html > server/index.html
+	sed 's/^\s*//g' client/index.html | tr -d '\n' > server/index.html.stripped
+	zopfli --i1000 -c --deflate server/index.html.stripped > server/index.html
 
 server/cpkthttp: server/c/main.c
 	gcc -O2 -o server/cpkthttp server/c/main.c
