@@ -17,7 +17,7 @@
 
 
 #define PORT "80"  // the port users will be connecting to
-#define HEADERS "HTTP/1.1 200 k\nContent-Length: %d\ncontent-encoding: deflate\n\n"
+#define HEADERS "HTTP/1.1 200 k\nContent-Length: %ld\ncontent-encoding: deflate\n\n"
 
 #define BACKLOG 10     // how many pending connections queue will hold
 #define MAX_CONTENT_LENGTH 9999
@@ -47,6 +47,7 @@ int main(void)
     char    *buffer;
     long    numbytes;
     long    hdrbytes;
+    long    chkread;
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -123,7 +124,10 @@ int main(void)
     }
      
     hdrbytes = sprintf(buffer, HEADERS, numbytes);
-    fread(buffer + hdrbytes, sizeof(char), numbytes, fp);
+    chkread = fread(buffer + hdrbytes, sizeof(char), numbytes, fp);
+    if(chkread != numbytes) {
+        return 1;
+    }
     fclose(fp);
 
     printf("server: waiting for connections on port %s...\n", PORT);
