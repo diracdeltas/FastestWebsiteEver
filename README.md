@@ -27,3 +27,5 @@ Get in touch today to hear about our 120-byte ad sponsorship opportunities!
 
 * visuals based on http://www.p01.org/128b_raytraced_checkboard/ by Mathieu 'p01' Henri
 * favicon based on http://cultofthepartyparrot.com/
+* thank you to [Candy Japan](https://www.candyjapan.com/) for the generous
+  sponsorship! surprise Japanese candy boxes twice a month!!
