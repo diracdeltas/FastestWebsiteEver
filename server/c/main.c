@@ -13,7 +13,6 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include <unistd.h>
 
 
 #define PORT "80"  // the port users will be connecting to
