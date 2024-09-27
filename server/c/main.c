@@ -17,7 +17,7 @@
 
 
 #define PORT "80"  // the port users will be connecting to
-#define HEADERS "HTTP/1.1 200 k\nContent-Length: %ld\ncontent-encoding: deflate\n\n"
+#define HEADERS "HTTP/1.1\nContent-Length: %ld\ncontent-encoding: deflate\n\n"
 
 #define BACKLOG 10     // how many pending connections queue will hold
 #define MAX_CONTENT_LENGTH 9999
